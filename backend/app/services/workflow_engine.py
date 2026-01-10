@@ -28,7 +28,12 @@ class WorkflowEngine:
         execution_order = self._build_execution_order(nodes, edges)
         
         # Execute nodes in order
-        context = {"query": query, "knowledge_context": None, "web_context": None}
+        context = {
+            "query": query, 
+            "knowledge_context": None, 
+            "web_context": None,
+            "workflow_data": workflow_data
+        }
         
         for node in execution_order:
             node_type = node.get("type", "")
@@ -113,6 +118,62 @@ class WorkflowEngine:
             print(f"Knowledge base error: {e}")
             return None
     
+    def _format_workflow_context(self, workflow_data: Dict[str, Any]) -> str:
+        """Format workflow structure as readable context for the LLM"""
+        nodes = workflow_data.get("nodes", [])
+        edges = workflow_data.get("edges", [])
+        
+        if not nodes:
+            return "No workflow configured."
+        
+        parts = ["Current Workflow Configuration:"]
+        parts.append("\n=== Workflow Components ===")
+        
+        # List all nodes
+        for node in nodes:
+            node_type = node.get("type", "unknown")
+            node_data = node.get("data", {})
+            node_label = node_data.get("label", "Unnamed")
+            node_config = node_data.get("config", {})
+            
+            type_names = {
+                "userQuery": "User Query Input",
+                "knowledgeBase": "Knowledge Base (RAG)",
+                "llmEngine": "LLM Engine",
+                "output": "Output"
+            }
+            
+            parts.append(f"\n• {node_label} ({type_names.get(node_type, node_type)}):")
+            
+            # Add configuration details
+            if node_type == "knowledgeBase" and node_config:
+                if node_config.get("embeddingModel"):
+                    parts.append(f"  - Embedding Model: {node_config['embeddingModel']}")
+            
+            elif node_type == "llmEngine" and node_config:
+                if node_config.get("provider"):
+                    parts.append(f"  - Provider: {node_config['provider']}")
+                if node_config.get("model"):
+                    parts.append(f"  - Model: {node_config['model']}")
+                if node_config.get("temperature") is not None:
+                    parts.append(f"  - Temperature: {node_config['temperature']}")
+                if node_config.get("systemPrompt"):
+                    prompt_preview = node_config['systemPrompt'][:100] + "..." if len(node_config['systemPrompt']) > 100 else node_config['systemPrompt']
+                    parts.append(f"  - System Prompt: {prompt_preview}")
+                if node_config.get("enableWebSearch"):
+                    parts.append(f"  - Web Search: Enabled")
+        
+        # Show data flow
+        if edges:
+            parts.append("\n=== Data Flow ===")
+            node_map = {node["id"]: node.get("data", {}).get("label", "Unnamed") for node in nodes}
+            for edge in edges:
+                source_label = node_map.get(edge.get("source", ""), "Unknown")
+                target_label = node_map.get(edge.get("target", ""), "Unknown")
+                parts.append(f"  {source_label} → {target_label}")
+        
+        return "\n".join(parts)
+    
     async def _execute_llm_engine(
         self, 
         context: Dict[str, Any], 
@@ -139,12 +200,19 @@ class WorkflowEngine:
         # Combine contexts
         full_context = None
         context_parts = []
+        
+        # Add workflow context first
+        workflow_data = context.get("workflow_data")
+        if workflow_data:
+            workflow_context = self._format_workflow_context(workflow_data)
+            context_parts.append(workflow_context)
+        
         if knowledge_context:
-            context_parts.append(f"Document Knowledge:\n{knowledge_context}")
+            context_parts.append(f"\nDocument Knowledge:\n{knowledge_context}")
         if web_context:
             context_parts.append(f"\n{web_context}")
         if context_parts:
-            full_context = "\n".join(context_parts)
+            full_context = "\n\n".join(context_parts)
         
         # Generate response
         llm_service = LLMService(provider=provider, model=model, api_key=api_key)
