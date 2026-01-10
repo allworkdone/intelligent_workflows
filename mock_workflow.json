@@ -1,0 +1,95 @@
+{
+    "nodes": [
+        {
+            "id": "userQuery-1",
+            "type": "userQuery",
+            "position": {
+                "x": 100,
+                "y": 200
+            },
+            "data": {
+                "label": "User Query",
+                "type": "userQuery",
+                "config": {}
+            }
+        },
+        {
+            "id": "knowledgeBase-1",
+            "type": "knowledgeBase",
+            "position": {
+                "x": 400,
+                "y": 100
+            },
+            "data": {
+                "label": "Knowledge Base",
+                "type": "knowledgeBase",
+                "config": {
+                    "embeddingModel": "openai",
+                    "description": "Retrieves relevant information from uploaded documents"
+                }
+            }
+        },
+        {
+            "id": "llmEngine-1",
+            "type": "llmEngine",
+            "position": {
+                "x": 700,
+                "y": 200
+            },
+            "data": {
+                "label": "Gemini AI Processor",
+                "type": "llmEngine",
+                "config": {
+                    "provider": "gemini",
+                    "model": "gemini-2.5-flash",
+                    "temperature": 0.7,
+                    "systemPrompt": "You are a helpful AI research assistant. Use the provided context from documents and web search to give accurate, well-researched answers. If the context doesn't contain relevant information, say so and provide your best answer based on your training. Always cite sources when using provided context.",
+                    "enableWebSearch": true
+                }
+            }
+        },
+        {
+            "id": "output-1",
+            "type": "output",
+            "position": {
+                "x": 1000,
+                "y": 200
+            },
+            "data": {
+                "label": "Response Output",
+                "type": "output",
+                "config": {}
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "edge-1",
+            "source": "userQuery-1",
+            "target": "knowledgeBase-1",
+            "sourceHandle": "query",
+            "targetHandle": "query"
+        },
+        {
+            "id": "edge-2",
+            "source": "userQuery-1",
+            "target": "llmEngine-1",
+            "sourceHandle": "query",
+            "targetHandle": "input"
+        },
+        {
+            "id": "edge-3",
+            "source": "knowledgeBase-1",
+            "target": "llmEngine-1",
+            "sourceHandle": "context",
+            "targetHandle": "input"
+        },
+        {
+            "id": "edge-4",
+            "source": "llmEngine-1",
+            "target": "output-1",
+            "sourceHandle": "response",
+            "targetHandle": "response"
+        }
+    ]
+}
