@@ -26,8 +26,11 @@ export const Select: React.FC<SelectProps> = ({
             <div className="relative">
                 <select
                     className={`w-full pl-3 pr-10 py-2 bg-bg-tertiary border border-border-default rounded-md text-text-primary text-sm cursor-pointer transition-all duration-200 focus:border-border-focus focus:ring-4 focus:ring-accent-primary/15 focus:outline-none appearance-none ${error ? 'border-accent-danger focus:ring-accent-danger/15' : ''} ${className}`}
+                    value={props.value}
+                    disabled={false}
                     {...props}
                 >
+
                     {options.map((option) => (
                         <option key={option.value} value={option.value} className="bg-bg-secondary text-text-primary">
                             {option.label}
