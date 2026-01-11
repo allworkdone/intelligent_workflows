@@ -193,7 +193,8 @@ class WorkflowEngine:
         # Perform web search if enabled
         web_context = None
         if enable_web_search:
-            web_search = WebSearchService()
+            search_provider = config.get("webSearchProvider", "serpapi")  # Default to serpapi
+            web_search = WebSearchService(provider=search_provider)
             results = await web_search.search(query)
             web_context = web_search.format_results_as_context(results)
         
